@@ -1,13 +1,26 @@
-# yourapp/forms.py
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
-class SignUpForm(UserCreationForm):
-    first_name = forms.CharField(max_length=30, required=False, help_text='Optional.')
-    email = forms.EmailField(max_length=254, help_text='Required. Inform a valid email address.')
-    family_name = forms.CharField(max_length=100, required=True, help_text='Required. Family name.')
+class ParentSignUpForm(UserCreationForm):
+    email = forms.EmailField(required=True)
+    family_name = forms.CharField(max_length=100)
 
     class Meta:
         model = User
-        fields = ('username', 'first_name', 'email', 'password1', 'password2', 'family_name')
+        fields = ('username', 'email', 'family_name', 'password1', 'password2')
+
+class CreateUserForm(forms.ModelForm):
+    FAMILY_ROLE_CHOICES = [
+        ('parent', 'Parent'),
+        ('child', 'Child'),
+    ]
+    
+    role = forms.ChoiceField(choices=FAMILY_ROLE_CHOICES, help_text='Select whether this user is a parent or a child')
+    
+    class Meta:
+        model = User
+        fields = ('username', 'password', 'role')
+        widgets = {
+            'password': forms.PasswordInput()
+        }
