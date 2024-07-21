@@ -5,6 +5,7 @@ from django.urls import reverse_lazy
 from django.views.generic.edit import FormView
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from .forms import ParentSignUpForm, CreateUserForm
 
 
@@ -46,6 +47,8 @@ def check_permissions_and_redirect(request):
     
 @login_required
 def parent_dashboard_view(request):
+    if not request.user.groups.filter(name='Parents').exists():
+        return redirect('child_dashboard') 
     return render(request, 'parent_dashboard.html')
 
 @login_required
@@ -54,6 +57,9 @@ def child_dashboard_view(request):
 
 @login_required
 def create_user_account(request):
+    if not request.user.groups.filter(name='Parents').exists():
+        return redirect('child_dashboard') 
+    
     if request.method == 'POST':
         form = CreateUserForm(request.POST)
         if form.is_valid():
@@ -94,3 +100,25 @@ def create_user_account(request):
         form = CreateUserForm()
 
     return render(request, 'registration/create_user_account.html', {'form': form})
+
+@login_required
+def children_in_family_view(request):
+
+    if not request.user.groups.filter(name='Parents').exists():
+        return redirect('child_dashboard')
+    
+    parent_user = request.user
+
+    family_group = None
+    groups = parent_user.groups.all()
+    for group in groups:
+        if group.name != 'Parents':
+            family_group = Group.objects.get(name=group.name)
+
+    children_group = Group.objects.get(name='Children')
+    
+    users_in_family_group = User.objects.filter(groups=family_group)
+    users_in_children_group = User.objects.filter(groups=children_group)
+    family_members = users_in_family_group.filter(id__in=users_in_children_group.values('id'))
+
+    return render(request, 'children_in_family.html', {'family_members': family_members})

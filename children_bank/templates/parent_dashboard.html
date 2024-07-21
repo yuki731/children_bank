@@ -4,7 +4,8 @@
     <title>Parent Dashboard</title>
 </head>
 <body>
-    <h2>Welcome to the Parent Dashboard</h2>
-    <p>Here you can manage your children's accounts.</p>
+    <h1>ようこそ{{ user.username }}さん</h1>
+    <p><a href="{% url 'create_user_account' %}">家族のアカウントを作成</a></p>
+    <p><a href="{% url 'children_in_family' %}">子供のアカウントを管理</a></p>
 </body>
 </html>

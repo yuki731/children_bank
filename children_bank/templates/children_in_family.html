@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Children in Family</title>
+</head>
+<body>
+    <h1>家族グループに所属する子供の一覧</h1>
+    <ul>
+        {% for member in family_members %}
+        <li>{{ member.username }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
