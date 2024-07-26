@@ -1,0 +1,21 @@
+{% load custom_filters %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pocket Money for {{ child.username }}</title>
+</head>
+<body>
+
+    <main>
+        <h1>Pocket Money for {{ child.username }}</h1>
+        <ul>
+            {% for record in pocket_money_records %}
+                <li>{{ record.date }} - {{ record.get_transaction_type_display }}: {{ record.amount|to_int }} ({{ record.memo }})</li>
+            {% endfor %}
+        </ul>
+        <a href="{% url 'children_in_family' %}">Back to family members</a>
+    </main>
+
+</body>
+</html>

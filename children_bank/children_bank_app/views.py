@@ -5,7 +5,9 @@ from django.urls import reverse_lazy
 from django.views.generic.edit import FormView
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+from django.utils import timezone
+from django.shortcuts import render, get_object_or_404
+from .models import PocketMoney
 from .forms import ParentSignUpForm, CreateUserForm
 
 
@@ -58,7 +60,7 @@ def child_dashboard_view(request):
 @login_required
 def create_user_account(request):
     if not request.user.groups.filter(name='Parents').exists():
-        return redirect('child_dashboard') 
+        return redirect('child_dashboard')
     
     if request.method == 'POST':
         form = CreateUserForm(request.POST)
@@ -95,6 +97,17 @@ def create_user_account(request):
                 child_group, created = Group.objects.get_or_create(name=child_group_name)
                 user.groups.add(child_group)
 
+                # PocketMoney インスタンスを作成
+                pocket_money = PocketMoney(
+                    child=user,
+                    group=group_name,
+                    amount=0.00,  # 初期金額を設定
+                    date=timezone.now().date(),  # 現在の日付を設定
+                    transaction_type=PocketMoney.DEPOSIT,  # 初期トランザクションタイプを設定
+                    memo='Initial deposit'  # メモを設定
+                )
+                pocket_money.save()
+
             return redirect('parent_dashboard')
     else:
         form = CreateUserForm()
@@ -122,3 +135,9 @@ def children_in_family_view(request):
     family_members = users_in_family_group.filter(id__in=users_in_children_group.values('id'))
 
     return render(request, 'children_in_family.html', {'family_members': family_members})
+
+@login_required
+def child_pocket_money_view(request, child_id):
+    child = get_object_or_404(User, id=child_id)
+    pocket_money_records = PocketMoney.objects.filter(child=child)
+    return render(request, 'child_pocket_money.html', {'child': child, 'pocket_money_records': pocket_money_records})
