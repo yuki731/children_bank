@@ -7,6 +7,7 @@ from django.contrib.auth.models import User, Group
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.shortcuts import render, get_object_or_404
+from django.db.models import Sum
 from .models import PocketMoney
 from .forms import ParentSignUpForm, CreateUserForm
 
@@ -55,7 +56,12 @@ def parent_dashboard_view(request):
 
 @login_required
 def child_dashboard_view(request):
-    return render(request, 'child_dashboard.html')
+    if request.user.groups.filter(name='Parents').exists():
+        return redirect('parent_dashboard') 
+    child = request.user
+    pocket_money_records = PocketMoney.objects.filter(child=child)
+    total_amount = pocket_money_records.aggregate(total=Sum('amount'))['total']
+    return render(request, 'child_dashboard.html', {'total_amount': total_amount})
 
 @login_required
 def create_user_account(request):
@@ -140,4 +146,9 @@ def children_in_family_view(request):
 def child_pocket_money_view(request, child_id):
     child = get_object_or_404(User, id=child_id)
     pocket_money_records = PocketMoney.objects.filter(child=child)
-    return render(request, 'child_pocket_money.html', {'child': child, 'pocket_money_records': pocket_money_records})
+    total_amount = pocket_money_records.aggregate(total=Sum('amount'))['total']
+    return render(request, 'child_pocket_money.html', {
+        'child': child,
+        'pocket_money_records': pocket_money_records,
+        'total_amount': total_amount,
+        })
