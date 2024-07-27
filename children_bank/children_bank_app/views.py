@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate
 from django.views.generic import CreateView, TemplateView
 from django.urls import reverse_lazy
@@ -6,17 +6,15 @@ from django.views.generic.edit import FormView
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from django.shortcuts import render, get_object_or_404
 from django.db.models import Sum
-from .models import PocketMoney
-from .forms import ParentSignUpForm, CreateUserForm
-
+from .models import PocketMoney, JobCard
+from .forms import ParentSignUpForm, CreateUserForm, JobCardForm
 
 class SignUpView(CreateView):
     model = User
     form_class = ParentSignUpForm
     template_name = 'registration/signup.html'
-    success_url = reverse_lazy('parent_dashboard')
+    success_url = reverse_lazy('login')
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -25,7 +23,6 @@ class SignUpView(CreateView):
         user.last_name = family_name
         user.save()
         
-
         # ファミリーネームでグループを作成または取得
         unique_group_name = f"{family_name}_{user.id}"
         family_group, created = Group.objects.get_or_create(name=unique_group_name)
@@ -37,8 +34,13 @@ class SignUpView(CreateView):
 
         return response
     
+
 @login_required
 def check_permissions_and_redirect(request):
+    """
+    ユーザーのグループに応じて適切なダッシュボードにリダイレクトするビュー。
+    親ユーザーは親ダッシュボードに、子供ユーザーは子供ダッシュボードにリダイレクトされます。
+    """
     user = request.user
     
     # ユーザーが特定のグループに所属しているかどうかをチェック
@@ -47,24 +49,24 @@ def check_permissions_and_redirect(request):
     else:
         return redirect('child_dashboard')  # 子ユーザー用のダッシュボード
 
-    
+### Parent page
+
 @login_required
 def parent_dashboard_view(request):
+    """
+    親ユーザー用のダッシュボードを表示するビュー。
+    親ユーザーでない場合は子供ダッシュボードにリダイレクトされます。
+    """
     if not request.user.groups.filter(name='Parents').exists():
         return redirect('child_dashboard') 
     return render(request, 'parent_dashboard.html')
 
 @login_required
-def child_dashboard_view(request):
-    if request.user.groups.filter(name='Parents').exists():
-        return redirect('parent_dashboard') 
-    child = request.user
-    pocket_money_records = PocketMoney.objects.filter(child=child)
-    total_amount = pocket_money_records.aggregate(total=Sum('amount'))['total']
-    return render(request, 'child_dashboard.html', {'total_amount': total_amount})
-
-@login_required
 def create_user_account(request):
+    """
+    親ユーザーが子供または他の親ユーザーのアカウントを作成するビュー。
+    子供アカウントが作成されると、初期のPocketMoneyインスタンスも作成されます。
+    """
     if not request.user.groups.filter(name='Parents').exists():
         return redirect('child_dashboard')
     
@@ -122,7 +124,10 @@ def create_user_account(request):
 
 @login_required
 def children_in_family_view(request):
-
+    """
+    現在ログインしている親ユーザーが所属するファミリーグループの子供をリストするビュー。
+    親ユーザーでない場合は子供ダッシュボードにリダイレクトされます。
+    """
     if not request.user.groups.filter(name='Parents').exists():
         return redirect('child_dashboard')
     
@@ -144,6 +149,10 @@ def children_in_family_view(request):
 
 @login_required
 def child_pocket_money_view(request, child_id):
+    """
+    特定の子供ユーザーのPocketMoneyレコードを表示するビュー。
+    PocketMoneyレコードの合計金額も計算して表示します。
+    """
     child = get_object_or_404(User, id=child_id)
     pocket_money_records = PocketMoney.objects.filter(child=child)
     total_amount = pocket_money_records.aggregate(total=Sum('amount'))['total']
@@ -152,3 +161,49 @@ def child_pocket_money_view(request, child_id):
         'pocket_money_records': pocket_money_records,
         'total_amount': total_amount,
         })
+
+@login_required
+def create_job_card(request):
+    if not request.user.groups.filter(name='Parents').exists():
+        return redirect('child_dashboard')  # 親以外のユーザーがアクセスした場合のリダイレクト
+    
+    if request.method == 'POST':
+        form = JobCardForm(request.POST, request.FILES, parent_user=request.user)
+        if form.is_valid():
+            # フォームから選択された子供たちを取得
+            children = form.cleaned_data['children']
+            group = form.cleaned_data['group']
+            job_name = form.cleaned_data['job_name']
+            money = form.cleaned_data['money']
+            job_image = form.cleaned_data['job_image']
+
+            # 各子供について JobCard インスタンスを作成
+            for child in children:
+                JobCard.objects.create(
+                    child=child,
+                    group=group,
+                    job_name=job_name,
+                    money=money,
+                    job_image=job_image
+                )
+            
+            return redirect('parent_dashboard')  # 登録後のリダイレクト先
+    else:
+        form = JobCardForm(parent_user=request.user)
+    
+    return render(request, 'create_job_card.html', {'form': form})
+
+### Child page
+
+@login_required
+def child_dashboard_view(request):
+    """
+    子供ユーザー用のダッシュボードを表示するビュー。
+    親ユーザーである場合は親ダッシュボードにリダイレクトされます。
+    """
+    if request.user.groups.filter(name='Parents').exists():
+        return redirect('parent_dashboard') 
+    child = request.user
+    pocket_money_records = PocketMoney.objects.filter(child=child)
+    total_amount = pocket_money_records.aggregate(total=Sum('amount'))['total']
+    return render(request, 'child_dashboard.html', {'total_amount': total_amount})

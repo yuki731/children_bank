@@ -6,7 +6,8 @@
     <title>children Dashboard</title>
 </head>
 <body>
-    <h2>ようこそ{{ user.username }}さん</h2>
+    <h2>ようこそ{{ user.first_name }}さん</h2>
     <p>おこづかい: {{ total_amount|to_int }}円</p>
+    <p><a href="{% url 'logout' %}">Logout</a></p>
 </body>
 </html>

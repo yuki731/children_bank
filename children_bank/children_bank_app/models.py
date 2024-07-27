@@ -13,11 +13,21 @@ class PocketMoney(models.Model):
     ]
 
     child = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pocket_money')
-    group = models.TextField(blank=True, null=True)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    group = models.CharField(max_length=100, blank=True, null=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=0)
     date = models.DateField()
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
     memo = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.child.username} - {self.get_transaction_type_display()} of {self.amount} on {self.date}"
+        return f"{self.child.username} - {self.group} - {self.get_transaction_type_display()} of {self.amount} on {self.date}"
+    
+class JobCard(models.Model):
+    child = models.ForeignKey(User, on_delete=models.CASCADE, related_name='job_card')
+    group = models.CharField(max_length=100, blank=True, null=True)
+    job_name = models.CharField(max_length=100, blank=False, null=False)
+    money = models.DecimalField(max_digits=10, decimal_places=0)
+    job_image = models.ImageField(upload_to='job_pictures/', blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.child.username} - {self.group} - {self.job_name} - {self.money}"
