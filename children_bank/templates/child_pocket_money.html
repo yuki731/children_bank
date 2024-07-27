@@ -14,6 +14,7 @@
                 <li>{{ record.date }} - {{ record.get_transaction_type_display }}: {{ record.amount|to_int }} ({{ record.memo }})</li>
             {% endfor %}
         </ul>
+        <p>Total Amount: {{ total_amount|to_int }}円</p>
         <a href="{% url 'children_in_family' %}">Back to family members</a>
     </main>
 
