@@ -7,8 +7,8 @@ from django.contrib.auth.models import User, Group
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db.models import Sum
-from .models import PocketMoney, JobCard, JobReport
-from .forms import ParentSignUpForm, CreateUserForm, JobCardForm
+from .models import PocketMoney, JobCard, JobReport, DepositRequest
+from .forms import ParentSignUpForm, CreateUserForm, JobCardForm, DepositRequestForm
 
 class SignUpView(CreateView):
     model = User
@@ -159,6 +159,7 @@ def child_pocket_money_view(request, child_id):
     
     job_cards = JobCard.objects.filter(child=child)
     job_reports = JobReport.objects.filter(reported_by=child)
+    deposit_requests = DepositRequest.objects.filter(reported_by=child)
 
     return render(request, 'child_pocket_money.html', {
         'child': child,
@@ -166,6 +167,7 @@ def child_pocket_money_view(request, child_id):
         'total_amount': total_amount,
         'job_cards': job_cards,
         'job_reports': job_reports,
+        'deposit_requests': deposit_requests,
     })
 
 @login_required
@@ -239,7 +241,7 @@ def report_job_view(request, job_id):
     family_group = None
     groups = user.groups.all()
     for group in groups:
-        if group.name != 'Parents':
+        if group.name != 'Children':
             family_group = Group.objects.get(name=group.name)
     
     if request.method == 'POST':
@@ -254,4 +256,24 @@ def report_job_view(request, job_id):
         return redirect('child_dashboard')  # リダイレクト先を指定
     return render(request, 'report_job.html', {'job': job})
 
+@login_required
+def create_deposit_request_view(request):
+    if request.method == 'POST':
+        user = request.user
+        family_group = None
+        groups = user.groups.all()
+        for group in groups:
+            if group.name != 'Parents':
+                family_group = Group.objects.get(name=group.name)
+
+        form = DepositRequestForm(request.POST)
+        if form.is_valid():
+            deposit_request = form.save(commit=False)
+            deposit_request.reported_by = user
+            deposit_request.group = family_group
+            deposit_request.save()
+            return redirect('child_dashboard') 
+    else:
+        form = DepositRequestForm()
+    return render(request, 'create_deposit_request.html', {'form': form})
 

@@ -45,6 +45,19 @@
             </li>
         {% endfor %}
     </ul>
+
+    <h2>Deposit Requests</h2>
+    <ul>
+        {% for request in deposit_requests %}
+            <li>
+                {{ request.title }}: {{ request.money }}円 ({{ request.reported_at }})
+                <form action= method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">承認</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
 </body>
 </html>
 

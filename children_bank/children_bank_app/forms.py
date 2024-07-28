@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import JobCard
+from .models import JobCard, DepositRequest
 
 class ParentSignUpForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -68,3 +68,8 @@ class JobCardForm(forms.ModelForm):
                 # 両方のグループに所属するユーザーをフィルタリング
                 eligible_users = users_in_family_group.filter(id__in=children_group.values('id'))
                 self.fields['children'].queryset = eligible_users
+
+class DepositRequestForm(forms.ModelForm):
+    class Meta:
+        model = DepositRequest
+        fields = ['title', 'money']
