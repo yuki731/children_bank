@@ -43,9 +43,11 @@ class JobCardForm(forms.ModelForm):
         widget=forms.CheckboxSelectMultiple()  # 複数選択用のチェックボックス
     )
 
+    job_image = forms.ImageField(required=False)
+
     class Meta:
         model = JobCard
-        fields = ['children', 'group', 'job_name', 'money', 'job_image']
+        fields = ['children', 'job_name', 'money', 'job_image']
 
     def __init__(self, *args, **kwargs):
         parent_user = kwargs.pop('parent_user', None)  # 親ユーザーを取得

@@ -8,6 +8,7 @@
 <body>
     <h2>ようこそ{{ user.first_name }}さん</h2>
     <p>おこづかい: {{ total_amount|to_int }}円</p>
+    <p><a href="{% url 'task_view' %}">お手伝いリスト</a></p>
     <p><a href="{% url 'logout' %}">Logout</a></p>
 </body>
 </html>

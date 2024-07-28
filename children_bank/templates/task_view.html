@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ child.username }}'s Pocket Money</title>
+</head>
+<body>
+    <h1>Job Cards</h1>
+    <ul>
+        {% for job in job_cards %}
+            <li>
+                {{ job.job_name }}: {{ job.money }}円
+                {% if job.job_image %}
+                    <img src="{{ job.job_image.url }}" alt="{{ job.job_name }}" width="100">
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

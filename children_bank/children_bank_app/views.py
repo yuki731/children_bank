@@ -150,17 +150,30 @@ def children_in_family_view(request):
 @login_required
 def child_pocket_money_view(request, child_id):
     """
-    特定の子供ユーザーのPocketMoneyレコードを表示するビュー。
+    特定の子供ユーザーのPocketMoneyレコードとJobCardレコードを表示するビュー。
     PocketMoneyレコードの合計金額も計算して表示します。
     """
     child = get_object_or_404(User, id=child_id)
     pocket_money_records = PocketMoney.objects.filter(child=child)
     total_amount = pocket_money_records.aggregate(total=Sum('amount'))['total']
+    
+    job_cards = JobCard.objects.filter(child=child)
+
     return render(request, 'child_pocket_money.html', {
         'child': child,
         'pocket_money_records': pocket_money_records,
         'total_amount': total_amount,
-        })
+        'job_cards': job_cards,
+    })
+
+@login_required
+def delete_job_card(request, job_card_id):
+    """
+    特定のJobCardレコードを削除するビュー。
+    """
+    job_card = get_object_or_404(JobCard, id=job_card_id)
+    job_card.delete()
+    return redirect('child_pocket_money', child_id=job_card.child.id)
 
 @login_required
 def create_job_card(request):
@@ -172,16 +185,18 @@ def create_job_card(request):
         if form.is_valid():
             # フォームから選択された子供たちを取得
             children = form.cleaned_data['children']
-            group = form.cleaned_data['group']
             job_name = form.cleaned_data['job_name']
             money = form.cleaned_data['money']
             job_image = form.cleaned_data['job_image']
+
+            # 親ユーザーの家族グループを取得
+            family_group = request.user.groups.exclude(name='Parents').first()
 
             # 各子供について JobCard インスタンスを作成
             for child in children:
                 JobCard.objects.create(
                     child=child,
-                    group=group,
+                    group=family_group.name,
                     job_name=job_name,
                     money=money,
                     job_image=job_image
@@ -207,3 +222,9 @@ def child_dashboard_view(request):
     pocket_money_records = PocketMoney.objects.filter(child=child)
     total_amount = pocket_money_records.aggregate(total=Sum('amount'))['total']
     return render(request, 'child_dashboard.html', {'total_amount': total_amount})
+
+@login_required
+def task_view(request):
+    child = request.user
+    job_cards = JobCard.objects.filter(child=child)
+    return render(request, 'task_view.html', {'job_cards': job_cards})

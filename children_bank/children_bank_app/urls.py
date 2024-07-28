@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import path
-from .views import SignUpView, parent_dashboard_view, check_permissions_and_redirect, child_dashboard_view, create_user_account, children_in_family_view, child_pocket_money_view, create_job_card
+from .views import SignUpView, parent_dashboard_view, check_permissions_and_redirect, child_dashboard_view, create_user_account, children_in_family_view, child_pocket_money_view, create_job_card, delete_job_card, task_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -14,4 +14,6 @@ urlpatterns = [
     path('children_in_family/', children_in_family_view, name='children_in_family'),
     path('child/<int:child_id>/', child_pocket_money_view, name='child_pocket_money'),
     path('create_job_card/', create_job_card, name='create_job_card'),
+    path('job_card/delete/<int:job_card_id>/', delete_job_card, name='delete_job_card'),
+    path('task_view/', task_view, name='task_view'),
 ]

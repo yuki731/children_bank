@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import PocketMoney
+from .models import PocketMoney, JobCard
 
 # PocketMoneyモデルのAdminクラスを作成（オプション）
 class PocketMoneyAdmin(admin.ModelAdmin):
@@ -9,3 +9,9 @@ class PocketMoneyAdmin(admin.ModelAdmin):
 
 # PocketMoneyモデルを管理サイトに登録
 admin.site.register(PocketMoney, PocketMoneyAdmin)
+
+class JobCardAdmin(admin.ModelAdmin):
+    list_display = ('child', 'group', 'job_name', 'money', 'job_image')
+    search_fields = ('child__username', 'job_name')
+
+admin.site.register(JobCard, JobCardAdmin)
