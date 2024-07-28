@@ -32,6 +32,19 @@
             </li>
         {% endfor %}
     </ul>
+
+    <h2>Job Reports</h2>
+    <ul>
+        {% for report in job_reports %}
+            <li>
+                {{ report.job_name }}: {{ report.money }}円 ({{ report.reported_at }})
+                <form action= method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">承認</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
 </body>
 </html>
 

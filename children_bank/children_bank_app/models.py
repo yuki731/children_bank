@@ -41,4 +41,4 @@ class JobReport(models.Model):
     status = models.CharField(max_length=20, default='Pending')
 
     def __str__(self):
-        return f"{self.job} - {self.money} - {self.reported_by.username} - {self.group} - {self.reported_at} - {self.status}"
+        return f"{self.job_name} - {self.money} - {self.reported_by.username} - {self.group} - {self.reported_at} - {self.status}"

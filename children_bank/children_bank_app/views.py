@@ -158,12 +158,14 @@ def child_pocket_money_view(request, child_id):
     total_amount = pocket_money_records.aggregate(total=Sum('amount'))['total']
     
     job_cards = JobCard.objects.filter(child=child)
+    job_reports = JobReport.objects.filter(reported_by=child)
 
     return render(request, 'child_pocket_money.html', {
         'child': child,
         'pocket_money_records': pocket_money_records,
         'total_amount': total_amount,
         'job_cards': job_cards,
+        'job_reports': job_reports,
     })
 
 @login_required
@@ -251,3 +253,5 @@ def report_job_view(request, job_id):
         messages.success(request, f'Job {job.job_name} has been reported to your parent for approval.')
         return redirect('child_dashboard')  # リダイレクト先を指定
     return render(request, 'report_job.html', {'job': job})
+
+
