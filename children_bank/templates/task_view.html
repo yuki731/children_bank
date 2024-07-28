@@ -12,6 +12,10 @@
                 {% if job.job_image %}
                     <img src="{{ job.job_image.url }}" alt="{{ job.job_name }}" width="100">
                 {% endif %}
+                <form method="POST" action="{% url 'report_job' job.id %}">
+                    {% csrf_token %}
+                    <button type="submit">報告</button>
+                </form>
             </li>
         {% endfor %}
     </ul>

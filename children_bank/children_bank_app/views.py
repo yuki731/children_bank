@@ -2,12 +2,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate
 from django.views.generic import CreateView, TemplateView
 from django.urls import reverse_lazy
-from django.views.generic.edit import FormView
+from django.contrib import messages
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db.models import Sum
-from .models import PocketMoney, JobCard
+from .models import PocketMoney, JobCard, JobReport
 from .forms import ParentSignUpForm, CreateUserForm, JobCardForm
 
 class SignUpView(CreateView):
@@ -228,3 +228,26 @@ def task_view(request):
     child = request.user
     job_cards = JobCard.objects.filter(child=child)
     return render(request, 'task_view.html', {'job_cards': job_cards})
+
+@login_required
+def report_job_view(request, job_id):
+    job = get_object_or_404(JobCard, id=job_id)
+    user = request.user
+
+    family_group = None
+    groups = user.groups.all()
+    for group in groups:
+        if group.name != 'Parents':
+            family_group = Group.objects.get(name=group.name)
+    
+    if request.method == 'POST':
+        # TaskReportに報告されたジョブ情報を保存
+        JobReport.objects.create(
+            job_name=job.job_name,
+            money=job.money,
+            group=family_group,
+            reported_by=request.user,
+        )
+        messages.success(request, f'Job {job.job_name} has been reported to your parent for approval.')
+        return redirect('child_dashboard')  # リダイレクト先を指定
+    return render(request, 'report_job.html', {'job': job})
