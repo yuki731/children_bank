@@ -46,9 +46,9 @@
         {% endfor %}
     </ul>
 
-    <h2>Deposit Requests</h2>
+    <h2>withdrawal Requests</h2>
     <ul>
-        {% for request in deposit_requests %}
+        {% for request in withdrawal_requests %}
             <li>
                 {{ request.title }}: {{ request.money }}円 ({{ request.reported_at }})
                 <form action= method="post" style="display:inline;">
