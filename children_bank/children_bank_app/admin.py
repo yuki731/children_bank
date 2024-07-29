@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import PocketMoney, JobCard, JobReport, withdrawalRequest
+from .models import PocketMoney, JobCard, JobReport, WithdrawalRequest
 
 # PocketMoneyモデルのAdminクラスを作成（オプション）
 class PocketMoneyAdmin(admin.ModelAdmin):
@@ -22,8 +22,8 @@ class JobReportAdmin(admin.ModelAdmin):
 
 admin.site.register(JobReport, JobReportAdmin)
 
-class withdrawalRequestAdmin(admin.ModelAdmin):
+class WithdrawalRequestAdmin(admin.ModelAdmin):
     list_display = ('title', 'money', 'group', 'reported_by', 'reported_at', 'status')
     search_fields = ('reported_by__username', 'group', 'status')
 
-admin.site.register(withdrawalRequest, withdrawalRequestAdmin)
+admin.site.register(WithdrawalRequest, WithdrawalRequestAdmin)

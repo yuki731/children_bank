@@ -6,9 +6,9 @@ from django.contrib import messages
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from django.db.models import Sum
-from .models import PocketMoney, JobCard, JobReport, withdrawalRequest
-from .forms import ParentSignUpForm, CreateUserForm, JobCardForm, withdrawalRequestForm
+from django.db.models import Sum, Case, When, IntegerField, F
+from .models import PocketMoney, JobCard, JobReport, WithdrawalRequest
+from .forms import ParentSignUpForm, CreateUserForm, JobCardForm, WithdrawalRequestForm
 
 class SignUpView(CreateView):
     model = User
@@ -155,11 +155,19 @@ def child_pocket_money_view(request, child_id):
     """
     child = get_object_or_404(User, id=child_id)
     pocket_money_records = PocketMoney.objects.filter(child=child)
-    total_amount = pocket_money_records.aggregate(total=Sum('amount'))['total']
+    total_amount = pocket_money_records.aggregate(
+        total=Sum(
+            Case(
+                When(transaction_type=PocketMoney.DEPOSIT, then='amount'),
+                When(transaction_type=PocketMoney.WITHDRAWAL, then=-1 * F('amount')),
+                output_field=IntegerField()
+            )
+        )
+    )['total']
     
     job_cards = JobCard.objects.filter(child=child)
     job_reports = JobReport.objects.filter(reported_by=child)
-    withdrawal_requests = withdrawalRequest.objects.filter(reported_by=child)
+    withdrawal_requests = WithdrawalRequest.objects.filter(reported_by=child)
 
     return render(request, 'child_pocket_money.html', {
         'child': child,
@@ -211,6 +219,61 @@ def create_job_card(request):
         form = JobCardForm(parent_user=request.user)
     
     return render(request, 'create_job_card.html', {'form': form})
+
+@login_required
+def approval_job_request(request, job_report_id):
+    """
+    特定のJobReportを承認するビュー。
+    """
+    if request.method == 'POST':
+        if not request.user.groups.filter(name='Parents').exists():
+            return redirect('child_dashboard')  # 親以外のユーザーがアクセスした場合のリダイレクト
+        
+        job_report = get_object_or_404(JobReport, id=job_report_id)
+
+        pocket_money = PocketMoney(
+            child=job_report.reported_by,
+            group=job_report.group,
+            amount=job_report.money,
+            date=timezone.now().date(),  # 現在の日付を設定
+            transaction_type=PocketMoney.DEPOSIT,  
+            memo=job_report.job_name
+        )
+        pocket_money.save()
+
+        job_report.delete()
+
+        return redirect('child_pocket_money', child_id=job_report.reported_by.id)
+    else:
+        return redirect('parent_dashboard')
+
+
+@login_required
+def approval_withdrawal_request(request, withdrawal_request_id):
+    """
+    特定のWithdrawalRequestを承認するビュー。
+    """
+    if request.method == 'POST':
+        if not request.user.groups.filter(name='Parents').exists():
+            return redirect('child_dashboard')  # 親以外のユーザーがアクセスした場合のリダイレクト
+    
+        withdrawal_request = get_object_or_404(WithdrawalRequest, id=withdrawal_request_id)
+
+        pocket_money = PocketMoney(
+            child=withdrawal_request.reported_by,
+            group=withdrawal_request.group,
+            amount=withdrawal_request.money,
+            date=timezone.now().date(),  # 現在の日付を設定
+            transaction_type=PocketMoney.WITHDRAWAL,  
+            memo=withdrawal_request.title
+        )
+        pocket_money.save()
+        
+        withdrawal_request.delete()
+        
+        return redirect('child_pocket_money', child_id=withdrawal_request.reported_by.id)
+    else:
+        return redirect('parent_dashboard')
 
 ### Child page
 
@@ -266,7 +329,7 @@ def create_withdrawal_request_view(request):
             if group.name != 'Parents':
                 family_group = Group.objects.get(name=group.name)
 
-        form = withdrawalRequestForm(request.POST)
+        form = WithdrawalRequestForm(request.POST)
         if form.is_valid():
             withdrawal_request = form.save(commit=False)
             withdrawal_request.reported_by = user
@@ -274,6 +337,6 @@ def create_withdrawal_request_view(request):
             withdrawal_request.save()
             return redirect('child_dashboard') 
     else:
-        form = withdrawalRequestForm()
-    return render(request, 'create_deposit_request.html', {'form': form})
+        form = WithdrawalRequestForm()
+    return render(request, 'create_withdrawal_request.html', {'form': form})
 

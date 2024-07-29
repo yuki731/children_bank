@@ -43,7 +43,7 @@ class JobReport(models.Model):
     def __str__(self):
         return f"{self.job_name} - {self.money} - {self.reported_by.username} - {self.group} - {self.reported_at} - {self.status}"
     
-class withdrawalRequest(models.Model):
+class WithdrawalRequest(models.Model):
     title = models.CharField(max_length=100, blank=False, null=False)
     money = models.DecimalField(max_digits=10, decimal_places=0)
     group = models.CharField(max_length=100, blank=True, null=True)

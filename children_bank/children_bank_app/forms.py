@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import JobCard, withdrawalRequest
+from .models import JobCard, WithdrawalRequest
 
 class ParentSignUpForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -69,7 +69,7 @@ class JobCardForm(forms.ModelForm):
                 eligible_users = users_in_family_group.filter(id__in=children_group.values('id'))
                 self.fields['children'].queryset = eligible_users
 
-class withdrawalRequestForm(forms.ModelForm):
+class WithdrawalRequestForm(forms.ModelForm):
     class Meta:
-        model = withdrawalRequest
+        model = WithdrawalRequest
         fields = ['title', 'money']

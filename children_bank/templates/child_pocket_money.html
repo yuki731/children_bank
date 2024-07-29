@@ -10,10 +10,29 @@
 
     <h2>Total Amount: {{ total_amount | to_int }}</h2>
 
-    <h2>Pocket Money Records</h2>
+    <h2>Job Reports</h2>
     <ul>
-        {% for record in pocket_money_records %}
-            <li>{{ record.date }}: {{ record.amount | to_int }} ({{ record.get_transaction_type_display }}) - {{ record.memo }}</li>
+        {% for report in job_reports %}
+            <li>
+                {{ report.job_name }}: {{ report.money }}円 ({{ report.reported_at }})
+                <form action="{% url 'approval_job_request' report.id %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">承認</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <h2>withdrawal Requests</h2>
+    <ul>
+        {% for request in withdrawal_requests %}
+            <li>
+                {{ request.title }}: {{ request.money }}円 ({{ request.reported_at }})
+                <form action="{% url 'approval_withdrawal_request' request.id %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">承認</button>
+                </form>
+            </li>
         {% endfor %}
     </ul>
 
@@ -33,31 +52,13 @@
         {% endfor %}
     </ul>
 
-    <h2>Job Reports</h2>
+    <h2>Pocket Money Records</h2>
     <ul>
-        {% for report in job_reports %}
-            <li>
-                {{ report.job_name }}: {{ report.money }}円 ({{ report.reported_at }})
-                <form action= method="post" style="display:inline;">
-                    {% csrf_token %}
-                    <button type="submit">承認</button>
-                </form>
-            </li>
+        {% for record in pocket_money_records %}
+            <li>{{ record.date }}: {{ record.amount | to_int }} ({{ record.get_transaction_type_display }}) - {{ record.memo }}</li>
         {% endfor %}
     </ul>
 
-    <h2>withdrawal Requests</h2>
-    <ul>
-        {% for request in withdrawal_requests %}
-            <li>
-                {{ request.title }}: {{ request.money }}円 ({{ request.reported_at }})
-                <form action= method="post" style="display:inline;">
-                    {% csrf_token %}
-                    <button type="submit">承認</button>
-                </form>
-            </li>
-        {% endfor %}
-    </ul>
 </body>
 </html>
 
